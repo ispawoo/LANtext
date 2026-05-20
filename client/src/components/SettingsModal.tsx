@@ -42,11 +42,16 @@ export const SettingsModal = ({
     onClose();
   };
 
+  const isHttps = window.location.protocol === 'https:';
+
   const resetToDefault = () => {
-    if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) {
-      setLocalServerUrl(`http://${window.location.hostname}:3001`);
+    if (isHttps) {
+      setLocalServerUrl(import.meta.env.VITE_SERVER_URL || '');
     } else {
-      setLocalServerUrl(import.meta.env.VITE_SERVER_URL || 'http://localhost:3001');
+      const h = window.location.hostname;
+      setLocalServerUrl(h !== 'localhost' && h !== '127.0.0.1'
+        ? `http://${h}:3001`
+        : 'http://localhost:3001');
     }
   };
 
@@ -131,10 +136,18 @@ export const SettingsModal = ({
                   value={localServerUrl}
                   onChange={(e) => setLocalServerUrl(e.target.value)}
                   className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-primary/50 transition-colors text-sm w-full font-mono"
-                  placeholder="http://192.168.x.x:3001"
+                  placeholder={isHttps ? 'https://your-server.onrender.com' : 'http://192.168.x.x:3001'}
                 />
                 <p className="text-[10px] text-textMuted leading-normal">
-                  <strong>Local Network Sync:</strong> Point this to your computer's local IP (e.g. <code>http://192.168.1.100:3001</code>) or leave as <code>http://localhost:3001</code> so mobile devices and computers on the same Wi-Fi can sync cleanly without security blocks.
+                  {isHttps ? (
+                    <>
+                      <strong>Internet Mode:</strong> Your app is on HTTPS — the server must also be HTTPS. Deploy the server to Render/Railway and paste its URL here (e.g. <code>https://lantext-server.onrender.com</code>).
+                    </>
+                  ) : (
+                    <>
+                      <strong>Local Network Mode:</strong> Point this to your computer's local IP (e.g. <code>http://192.168.1.100:3001</code>) so all devices on the same Wi-Fi can sync.
+                    </>
+                  )}
                 </p>
               </div>
 

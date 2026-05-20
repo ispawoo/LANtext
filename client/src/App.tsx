@@ -30,24 +30,33 @@ function App() {
   });
 
   const [serverUrl, setServerUrl] = useState(() => {
+    // 1. URL param always wins (from QR code scan)
     const urlParams = new URLSearchParams(window.location.search);
     const urlServer = urlParams.get('server');
     if (urlServer) {
       localStorage.setItem('serverUrl', urlServer);
       return urlServer;
     }
+
     const storedServer = localStorage.getItem('serverUrl');
-    if (storedServer && storedServer.includes('onrender.com')) {
-      localStorage.removeItem('serverUrl');
-    } else if (storedServer) {
-      return storedServer;
+
+    // 2. If on HTTPS (Vercel / internet), always use the cloud signaling server
+    if (window.location.protocol === 'https:') {
+      const cloudServer = import.meta.env.VITE_SERVER_URL || '';
+      // Ignore any stored local http:// URL — it can't work from HTTPS
+      if (storedServer && storedServer.startsWith('https://')) return storedServer;
+      return cloudServer;
     }
-    
-    // Auto-detect local network IP port 3001
-    if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) {
-      return `http://${window.location.hostname}:3001`;
+
+    // 3. On HTTP (local dev / LAN) — use stored or auto-detect local IP
+    if (storedServer && storedServer.startsWith('http://')) return storedServer;
+
+    // Auto-detect: use the hostname the app was opened from
+    const h = window.location.hostname;
+    if (h !== 'localhost' && h !== '127.0.0.1') {
+      return `http://${h}:3001`;
     }
-    return import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    return 'http://localhost:3001';
   });
 
   const handleTextReceived = useCallback((text: string) => {
