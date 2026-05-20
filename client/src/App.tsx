@@ -37,7 +37,11 @@ function App() {
       return urlServer;
     }
     const storedServer = localStorage.getItem('serverUrl');
-    if (storedServer) return storedServer;
+    if (storedServer && storedServer.includes('onrender.com')) {
+      localStorage.removeItem('serverUrl');
+    } else if (storedServer) {
+      return storedServer;
+    }
     
     // Auto-detect local network IP port 3001
     if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) {
