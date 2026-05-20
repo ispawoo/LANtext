@@ -15,6 +15,17 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [showApp, setShowApp] = useState(false);
 
+  const [syncMode, setSyncMode] = useState<'cloud' | 'local'>(() => {
+    const storedMode = localStorage.getItem('syncMode');
+    if (storedMode === 'cloud' || storedMode === 'local') return storedMode;
+    
+    // Auto-detect based on origin
+    if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) {
+      return 'local';
+    }
+    return 'cloud';
+  });
+
   const [roomId, setRoomId] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlRoom = urlParams.get('room');
@@ -39,11 +50,14 @@ function App() {
     const storedServer = localStorage.getItem('serverUrl');
     if (storedServer) return storedServer;
     
-    // Auto-detect local network IP port 3001
-    if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) {
+    // Auto-detect default server depends on syncMode
+    const mode = localStorage.getItem('syncMode') || (
+      (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) ? 'local' : 'cloud'
+    );
+    if (mode === 'local') {
       return `http://${window.location.hostname}:3001`;
     }
-    return import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    return import.meta.env.VITE_SERVER_URL || 'https://lantext-server.onrender.com';
   });
 
   const handleTextReceived = useCallback((text: string) => {
@@ -72,6 +86,22 @@ function App() {
   const handleSaveRoomId = (id: string) => {
     setRoomId(id);
     localStorage.setItem('roomId', id);
+  };
+
+  const handleSaveSyncMode = (mode: 'cloud' | 'local') => {
+    setSyncMode(mode);
+    localStorage.setItem('syncMode', mode);
+    
+    // Also auto-update serverUrl if switching
+    if (mode === 'local') {
+      const defaultLocalUrl = `http://${window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname}:3001`;
+      setServerUrl(defaultLocalUrl);
+      localStorage.setItem('serverUrl', defaultLocalUrl);
+    } else {
+      const defaultCloudUrl = import.meta.env.VITE_SERVER_URL || 'https://lantext-server.onrender.com';
+      setServerUrl(defaultCloudUrl);
+      localStorage.setItem('serverUrl', defaultCloudUrl);
+    }
   };
 
   const copyToClipboard = async () => {
@@ -265,6 +295,8 @@ function App() {
         roomId={roomId}
         onSaveRoomId={handleSaveRoomId}
         isConnected={isConnected}
+        syncMode={syncMode}
+        onSaveSyncMode={handleSaveSyncMode}
       />
 
       <footer className="fixed bottom-4 right-8 text-xs text-textMuted flex flex-col items-end gap-1">

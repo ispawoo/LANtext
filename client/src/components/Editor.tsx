@@ -28,7 +28,7 @@ export const Editor = ({ content, onChange }: EditorProps) => {
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none min-h-[300px] outline-none',
+        class: 'prose prose-invert max-w-none min-h-[300px] outline-none p-5 md:p-8',
       },
     },
   });
