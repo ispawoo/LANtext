@@ -52,6 +52,7 @@ function App() {
 
   const {
     isConnected,
+    connectionError,
     peers,
     broadcastText,
     deviceName,
@@ -160,6 +161,8 @@ function App() {
     );
   }
 
+  const isMixedContentError = window.location.protocol === 'https:' && serverUrl.startsWith('http://');
+
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
       <Header 
@@ -167,8 +170,52 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onGoHome={() => setShowApp(false)}
       />
+
+      {/* Security & Connection Warnings */}
+      {(isMixedContentError || (connectionError && !isConnected)) && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex flex-col gap-2 relative overflow-hidden backdrop-blur-md shadow-lg"
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0">⚠️</span>
+            <div className="flex-1">
+              <h3 className="font-bold text-white mb-1">
+                {isMixedContentError ? 'Browser Security Warning (Mixed Content)' : 'Signaling Server Disconnected'}
+              </h3>
+              <p className="text-gray-300 leading-relaxed text-xs sm:text-sm">
+                {isMixedContentError ? (
+                  <>
+                    You are accessing LANtext over secure <strong>HTTPS</strong>, but your signaling server is set to an insecure <strong>HTTP</strong> address (<code>{serverUrl}</code>). Modern web browsers block secure websites from connecting to insecure local services.
+                  </>
+                ) : (
+                  <>
+                    Could not establish a connection to your signaling server at <code>{serverUrl}</code>. Make sure your server is running and accessible on your local network.
+                  </>
+                )}
+              </p>
+              
+              <div className="mt-4 p-4 rounded-xl bg-black/35 border border-white/5 flex flex-col gap-2 text-xs">
+                <span className="font-bold text-white uppercase tracking-wider text-xxs">How to solve this in 10 seconds:</span>
+                <ul className="list-disc pl-4 space-y-1.5 text-gray-300">
+                  <li>
+                    <strong>Run the app locally:</strong> Open the app on your computer using the local HTTP URL <code>http://localhost:5173</code> (or your computer's local IP, e.g. <code>http://192.168.x.x:5173</code>) instead of Vercel. Both devices will connect cleanly without security blocks.
+                  </li>
+                  <li>
+                    <strong>Use Secure Protocol:</strong> If your backend is deployed, ensure the signaling server URL starts with <code>https://</code> or <code>wss://</code> (e.g. <code>https://your-backend.onrender.com</code>).
+                  </li>
+                  <li>
+                    <strong>Configure Settings:</strong> Click the <button onClick={() => setIsSettingsOpen(true)} className="text-primary hover:underline font-bold focus:outline-none cursor-pointer">Configure Server</button> button to update your settings.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
       
-      <main className="flex-1 flex flex-col md:flex-row gap-6 lg:gap-8 h-[calc(100vh-140px)] pb-12">
+      <main className="flex-1 flex flex-col md:flex-row gap-6 lg:gap-8 min-h-0 h-auto md:h-[calc(100vh-140px)] pb-6 md:pb-12">
         <Sidebar 
           peers={peers} 
           deviceName={deviceName} 

@@ -19,6 +19,7 @@ export const useNetwork = (
   const [deviceId] = useState(() => localStorage.getItem('deviceId') || uuidv4());
   const [deviceName, setDeviceName] = useState(() => localStorage.getItem('deviceName') || `Device-${Math.floor(Math.random() * 1000)}`);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // WebRTC peer connections: Map<socketId, RTCPeerConnection>
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -43,6 +44,7 @@ export const useNetwork = (
 
     newSocket.on('connect', () => {
       setIsConnected(true);
+      setConnectionError(null);
       newSocket.emit('join', {
         id: deviceId,
         name: deviceName,
@@ -51,9 +53,16 @@ export const useNetwork = (
       });
     });
 
+    newSocket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err);
+      setIsConnected(false);
+      setConnectionError(err.message || 'Failed to connect');
+    });
+
     newSocket.on('disconnect', () => {
       setIsConnected(false);
       setPeers([]);
+      setConnectionError('Disconnected');
     });
 
     newSocket.on('room_peers', (existingPeers: Peer[]) => {
@@ -196,6 +205,7 @@ export const useNetwork = (
 
   return {
     isConnected,
+    connectionError,
     peers,
     broadcastText,
     deviceName,
