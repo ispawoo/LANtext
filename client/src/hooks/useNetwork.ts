@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
-// In production, you'd want this to be the deployed server URL
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 export type Peer = {
   id: string;
@@ -11,7 +9,11 @@ export type Peer = {
   deviceType: string;
 };
 
-export const useNetwork = (onTextReceived: (text: string) => void) => {
+export const useNetwork = (
+  serverUrl: string,
+  roomId: string,
+  onTextReceived: (text: string) => void
+) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [peers, setPeers] = useState<Peer[]>([]);
   const [deviceId] = useState(() => localStorage.getItem('deviceId') || uuidv4());
@@ -29,7 +31,7 @@ export const useNetwork = (onTextReceived: (text: string) => void) => {
   }, [deviceId, deviceName]);
 
   useEffect(() => {
-    const newSocket = io(SERVER_URL);
+    const newSocket = io(serverUrl);
     setSocket(newSocket);
 
     const getDeviceType = () => {
@@ -45,6 +47,7 @@ export const useNetwork = (onTextReceived: (text: string) => void) => {
         id: deviceId,
         name: deviceName,
         deviceType: getDeviceType(),
+        roomId: roomId,
       });
     });
 
@@ -115,7 +118,7 @@ export const useNetwork = (onTextReceived: (text: string) => void) => {
       peerConnections.current.clear();
       dataChannels.current.clear();
     };
-  }, [deviceId, deviceName]);
+  }, [deviceId, deviceName, serverUrl, roomId]);
 
   const createPeerConnection = (peerId: string, socketInstance: Socket, isInitiator: boolean) => {
     const pc = new RTCPeerConnection({

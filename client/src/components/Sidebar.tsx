@@ -7,9 +7,10 @@ interface SidebarProps {
   deviceName: string;
   onRename: (newName: string) => void;
   isConnected: boolean;
+  onOpenSettings?: () => void;
 }
 
-export const Sidebar = ({ peers, deviceName, onRename, isConnected }: SidebarProps) => {
+export const Sidebar = ({ peers, deviceName, onRename, isConnected, onOpenSettings }: SidebarProps) => {
   const getDeviceIcon = (type: string) => {
     switch (type) {
       case 'mobile': return <Smartphone className="text-gray-400" size={20} />;
@@ -39,11 +40,21 @@ export const Sidebar = ({ peers, deviceName, onRename, isConnected }: SidebarPro
               className="bg-transparent text-white font-semibold text-lg w-full outline-none border-b border-transparent focus:border-primary/50 transition-colors"
               placeholder="Your Name"
             />
-            <div className="flex items-center gap-2 mt-1">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
-              <span className="text-xs text-textMuted">
-                {isConnected ? 'Connected to LAN' : 'Disconnected'}
-              </span>
+            <div className="flex flex-col gap-1 mt-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
+                <span className="text-xs text-textMuted font-medium">
+                  {isConnected ? 'Connected to Room' : 'Disconnected'}
+                </span>
+              </div>
+              {onOpenSettings && (
+                <button
+                  onClick={onOpenSettings}
+                  className="text-xxs text-primary hover:underline self-start font-medium cursor-pointer"
+                >
+                  Configure Server
+                </button>
+              )}
             </div>
           </div>
         </div>

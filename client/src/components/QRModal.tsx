@@ -6,15 +6,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface QRModalProps {
   isOpen: boolean;
   onClose: () => void;
+  serverUrl: string;
+  roomId: string;
 }
 
-export const QRModal = ({ isOpen, onClose }: QRModalProps) => {
+export const QRModal = ({ isOpen, onClose, serverUrl, roomId }: QRModalProps) => {
   const [url, setUrl] = useState('');
 
   useEffect(() => {
-    // In a real deployed app, this would be the actual window.location.origin
-    setUrl(window.location.href);
-  }, []);
+    if (isOpen) {
+      const origin = window.location.origin + window.location.pathname;
+      const connectUrl = `${origin}?room=${encodeURIComponent(roomId)}&server=${encodeURIComponent(serverUrl)}`;
+      setUrl(connectUrl);
+    }
+  }, [isOpen, serverUrl, roomId]);
 
   return (
     <AnimatePresence>

@@ -1,11 +1,13 @@
-import { QrCode, Heart } from 'lucide-react';
+import { QrCode, Heart, Home, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface HeaderProps {
   onOpenQR: () => void;
+  onOpenSettings: () => void;
+  onGoHome: () => void;
 }
 
-export const Header = ({ onOpenQR }: HeaderProps) => {
+export const Header = ({ onOpenQR, onOpenSettings, onGoHome }: HeaderProps) => {
   return (
     <motion.header 
       initial={{ opacity: 0, y: -20 }}
@@ -13,8 +15,11 @@ export const Header = ({ onOpenQR }: HeaderProps) => {
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="flex items-center justify-between py-4 mb-6"
     >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+      <div 
+        onClick={onGoHome}
+        className="flex items-center gap-3 cursor-pointer group hover:opacity-90 transition-opacity"
+      >
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)] group-hover:scale-105 transition-transform">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M7 10L12 14L17 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -28,11 +33,25 @@ export const Header = ({ onOpenQR }: HeaderProps) => {
 
       <div className="flex items-center gap-3">
         <button 
+          onClick={onGoHome}
+          className="glass-button w-10 h-10 rounded-full"
+          title="Back to Landing Page"
+        >
+          <Home size={18} className="text-gray-300" />
+        </button>
+        <button 
           onClick={onOpenQR}
           className="glass-button w-10 h-10 rounded-full"
           title="Connect via QR"
         >
           <QrCode size={18} className="text-gray-300" />
+        </button>
+        <button 
+          onClick={onOpenSettings}
+          className="glass-button w-10 h-10 rounded-full"
+          title="Server Settings"
+        >
+          <Settings size={18} className="text-gray-300" />
         </button>
         <a 
           href="https://github.com/ispawoo" 

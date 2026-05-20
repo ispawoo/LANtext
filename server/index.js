@@ -37,16 +37,18 @@ io.on('connection', (socket) => {
   const ip = getClientIp(socket);
   
   socket.on('join', (deviceInfo) => {
-    // deviceInfo: { name: 'Yasir-PC', deviceType: 'desktop' }
+    // deviceInfo: { name: 'Yasir-PC', deviceType: 'desktop', roomId }
+    const roomName = deviceInfo.roomId || ip;
+    socket.roomName = roomName;
     
-    // Join a room specific to the public IP
-    socket.join(ip);
+    // Join a room specific to the roomId or public IP
+    socket.join(roomName);
     
-    if (!rooms.has(ip)) {
-      rooms.set(ip, new Map());
+    if (!rooms.has(roomName)) {
+      rooms.set(roomName, new Map());
     }
     
-    const roomClients = rooms.get(ip);
+    const roomClients = rooms.get(roomName);
     const peerInfo = { id: socket.id, ...deviceInfo };
     roomClients.set(socket.id, peerInfo);
     
@@ -55,9 +57,9 @@ io.on('connection', (socket) => {
     socket.emit('room_peers', existingPeers);
     
     // Notify others in the room
-    socket.to(ip).emit('peer_joined', peerInfo);
+    socket.to(roomName).emit('peer_joined', peerInfo);
     
-    console.log(`[${ip}] Client ${socket.id} (${deviceInfo.name}) joined.`);
+    console.log(`[${roomName}] Client ${socket.id} (${deviceInfo.name}) joined.`);
   });
   
   // WebRTC Signaling
@@ -71,24 +73,26 @@ io.on('connection', (socket) => {
   
   // Fallback Text Relay via Socket.io
   socket.on('relay_text', (data) => {
+    const roomName = socket.roomName || ip;
     // broadcast to room
-    socket.to(ip).emit('text_received', {
+    socket.to(roomName).emit('text_received', {
       from: socket.id,
       content: data.content
     });
   });
 
   socket.on('disconnect', () => {
-    const roomClients = rooms.get(ip);
+    const roomName = socket.roomName || ip;
+    const roomClients = rooms.get(roomName);
     if (roomClients) {
       roomClients.delete(socket.id);
       if (roomClients.size === 0) {
-        rooms.delete(ip);
+        rooms.delete(roomName);
       } else {
-        socket.to(ip).emit('peer_left', socket.id);
+        socket.to(roomName).emit('peer_left', socket.id);
       }
     }
-    console.log(`[${ip}] Client ${socket.id} disconnected.`);
+    console.log(`[${roomName}] Client ${socket.id} disconnected.`);
   });
 });
 

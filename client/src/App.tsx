@@ -4,14 +4,47 @@ import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { QRModal } from './components/QRModal';
+import { SettingsModal } from './components/SettingsModal';
 import { Copy, CheckCheck, Zap, Globe, Lock, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function App() {
   const [content, setContent] = useState('');
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showApp, setShowApp] = useState(false);
+
+  const [roomId, setRoomId] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlRoom = urlParams.get('room');
+    if (urlRoom) {
+      localStorage.setItem('roomId', urlRoom);
+      return urlRoom;
+    }
+    const storedRoom = localStorage.getItem('roomId');
+    if (storedRoom) return storedRoom;
+    const newRoom = `room-${Math.floor(100000 + Math.random() * 900000)}`;
+    localStorage.setItem('roomId', newRoom);
+    return newRoom;
+  });
+
+  const [serverUrl, setServerUrl] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlServer = urlParams.get('server');
+    if (urlServer) {
+      localStorage.setItem('serverUrl', urlServer);
+      return urlServer;
+    }
+    const storedServer = localStorage.getItem('serverUrl');
+    if (storedServer) return storedServer;
+    
+    // Auto-detect local network IP port 3001
+    if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.')) {
+      return `http://${window.location.hostname}:3001`;
+    }
+    return import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+  });
 
   const handleTextReceived = useCallback((text: string) => {
     setContent(text);
@@ -23,11 +56,21 @@ function App() {
     broadcastText,
     deviceName,
     setDeviceName
-  } = useNetwork(handleTextReceived);
+  } = useNetwork(serverUrl, roomId, handleTextReceived);
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
     broadcastText(newContent);
+  };
+
+  const handleSaveServerUrl = (url: string) => {
+    setServerUrl(url);
+    localStorage.setItem('serverUrl', url);
+  };
+
+  const handleSaveRoomId = (id: string) => {
+    setRoomId(id);
+    localStorage.setItem('roomId', id);
   };
 
   const copyToClipboard = async () => {
@@ -119,7 +162,11 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
-      <Header onOpenQR={() => setIsQRModalOpen(true)} />
+      <Header 
+        onOpenQR={() => setIsQRModalOpen(true)} 
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onGoHome={() => setShowApp(false)}
+      />
       
       <main className="flex-1 flex flex-col md:flex-row gap-6 lg:gap-8 h-[calc(100vh-140px)] pb-12">
         <Sidebar 
@@ -127,6 +174,7 @@ function App() {
           deviceName={deviceName} 
           onRename={setDeviceName}
           isConnected={isConnected}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
         
         <motion.div 
@@ -156,6 +204,20 @@ function App() {
       <QRModal 
         isOpen={isQRModalOpen} 
         onClose={() => setIsQRModalOpen(false)} 
+        serverUrl={serverUrl}
+        roomId={roomId}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        deviceName={deviceName}
+        onRename={setDeviceName}
+        serverUrl={serverUrl}
+        onSaveServerUrl={handleSaveServerUrl}
+        roomId={roomId}
+        onSaveRoomId={handleSaveRoomId}
+        isConnected={isConnected}
       />
 
       <footer className="fixed bottom-4 right-8 text-xs text-textMuted flex flex-col items-end gap-1">
