@@ -49,11 +49,15 @@ io.on('connection', (socket) => {
     }
     
     const roomClients = rooms.get(roomName);
-    const peerInfo = { id: socket.id, ...deviceInfo };
+    // IMPORTANT: spread deviceInfo first, then override id with socket.id
+    // so that (1) self-filter works and (2) WebRTC signaling routes correctly
+    const peerInfo = { ...deviceInfo, id: socket.id };
     roomClients.set(socket.id, peerInfo);
     
-    // Send list of existing peers to the new client
-    const existingPeers = Array.from(roomClients.values()).filter(p => p.id !== socket.id);
+    // Send list of existing peers to the new client (exclude self by socket.id key)
+    const existingPeers = Array.from(roomClients.entries())
+      .filter(([key]) => key !== socket.id)
+      .map(([, value]) => value);
     socket.emit('room_peers', existingPeers);
     
     // Notify others in the room
