@@ -67,6 +67,26 @@ body {
   @apply outline-none min-h-[200px] text-lg leading-relaxed p-4;
 }
 
+.ProseMirror strong,
+.ProseMirror b {
+  font-weight: bold;
+}
+
+.ProseMirror em,
+.ProseMirror i {
+  font-style: italic;
+}
+
+.ProseMirror u {
+  text-decoration: underline;
+}
+
+.ProseMirror del,
+.ProseMirror s,
+.ProseMirror strike {
+  text-decoration: line-through;
+}
+
 .ProseMirror p {
   @apply mb-4 last:mb-0;
 }
